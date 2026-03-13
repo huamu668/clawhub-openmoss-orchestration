@@ -1,28 +1,37 @@
 ---
 name: openmoss-orchestration
-version: 1.4.0
+version: 1.6.0
 description: |
-  OpenMOSS 多智能体任务编排技能 v1.4.0 - Paperclip-inspired Control Plane + Agent Loop监控 + 170+ Skills
+  OpenMOSS 多智能体任务编排技能 v1.6.0 - Paperclip-inspired Control Plane + 多角色代理系统(Agency Agents) + ClipHub支持 + 多公司隔离 + Agent Loop监控 + 170+ Skills
 
-  核心架构（Paperclip-inspired + Chenxi AI Agent原理）：
+  核心架构（Paperclip-inspired + Chenxi AI Agent原理 + Agency Agents）：
   - **Control Plane Pattern**: 控制平面与执行分离，编排但不执行
+  - **Agency Agents Integration**: 20+专业角色代理（前端、后端、安全、DevOps等）
+  - **Role-Based Task Routing**: 基于角色的任务路由和委派
+  - **ClipHub Support**: 公司模板导出/导入，可移植公司配置
+  - **Multi-Company Isolation**: 单部署多公司，数据隔离
   - **Agent Loop Monitoring**: Perceive → Think → Act 循环监控
   - **Tool Calling Tracking**: 工具调用追踪与重试机制
   - **Memory Management**: 短期记忆 + 长期记忆 + 上下文窗口管理
   - **Heartbeat Execution**: 心跳执行模式（唤醒→检查→执行→退出）
   - **Org Structure**: CEO→Manager→IC 层级汇报链
   - **Goal Alignment**: 所有任务追溯到公司/项目目标
+  - **Goal-Aware Execution**: 任务携带完整目标祖先链
   - **Budget Control**: Token预算、自动暂停、成本追踪
+  - **Governance**: 配置版本化、审批机制、安全回滚
   - **Ticket System**: 完整审计日志、可追溯
+  - **Atomic Execution**: 任务和预算的原子化执行
   - **7-Phase Workflow**: 分析→设计→实现→测试→验证→文档→发布
   - **Multi-Framework**: OpenMOSS + CrewAI + AG2 + Paperclip统一编排
   - **BYO Agent**: 支持 OpenClaw/Claude/Codex/Cursor/HTTP Agent
 
-  适用场景：复杂项目管理、多智能体协作、AI公司运营、持续集成流水线
+  适用场景：复杂项目管理、多智能体协作、AI公司运营、专业角色代理团队、持续集成流水线
 
 trigger: |
   Use when user wants to:
   - Orchestrate multi-agent teams with Control Plane architecture
+  - Deploy Agency Agents specialized roles (Frontend, Backend, Security, etc.)
+  - Route tasks to appropriate agent roles automatically
   - Monitor Agent Loop (Perceive-Think-Act) execution
   - Track Tool Calling with retry and timeout logic
   - Implement Memory management for agents
@@ -35,6 +44,7 @@ trigger: |
   触发关键词：
   - "openmoss", "任务编排", "智能体团队", "多智能体协作"
   - "control plane", "heartbeat", "agent orchestration"
+  - "agency agents", "角色代理", "专业代理"
   - "agent loop", "tool calling", "memory management"
   - "paperclip", "AI公司", "预算控制", "审计日志"
   - "crewai", "AG2", "multi-agent"
@@ -334,6 +344,159 @@ POST /api/tasks/{id}/checkout
 { "agent_id": "Marketing-IC-01" }
 # 409 Conflict - 已被认领
 # 200 OK - 成功认领
+```
+
+---
+
+## What's New in v1.5.0 (Paperclip Deep Integration)
+
+### 🏢 Multi-Company Isolation
+
+单部署支持多公司，数据完全隔离：
+
+```yaml
+multi_company:
+  enabled: true
+  companies:
+    - id: "company-a"
+      name: "AI Consulting Ltd"
+      isolated: true
+    - id: "company-b"
+      name: "Dev Studio Inc"
+      isolated: true
+```
+
+**特性**:
+- 每个公司有独立的 Agent 注册表
+- 任务、预算、审计日志完全隔离
+- 统一的控制平面管理
+
+### 📦 ClipHub Support - 公司模板注册中心
+
+> "下载一个公司"
+
+```bash
+# 导出公司模板
+openmoss export --company my-company --template ./my-company-template.yaml
+
+# 导入公司模板
+openmoss import --template ./my-company-template.yaml --as new-company
+
+# 从 ClipHub 安装
+openmoss cliphub install huamu668/clawhub-openmoss-dev-studio
+```
+
+**模板内容**:
+```yaml
+template:
+  metadata:
+    name: "Dev Studio"
+    description: "Full-stack development team"
+    version: "1.0.0"
+
+  org_chart:
+    ceo:
+      name: "CEO-Agent"
+      role: "strategic_planning"
+    managers:
+      - name: "CTO-Agent"
+        reports:
+          - "Senior-Engineer-01"
+          - "Senior-Engineer-02"
+
+  agents:
+    - id: "Senior-Engineer-01"
+      adapter: "claude"
+      config: "./agents/senior-engineer.claude.md"
+
+  seed_tasks:
+    - title: "Setup project repository"
+      priority: high
+
+  budget_defaults:
+    monthly_limit: 100000
+    auto_pause: true
+```
+
+### ⚛️ Atomic Execution
+
+任务认领和预算执行是原子操作：
+
+```bash
+# 原子化任务认领
+POST /api/tasks/{id}/checkout
+{ "agent_id": "Engineer-01" }
+
+# 响应
+200 OK    - 成功认领
+409 Conflict - 已被其他 Agent 认领
+429 Too Many Requests - 预算已耗尽
+```
+
+**保证**:
+- 不会重复执行同一任务
+- 不会超出预算限制
+- 分布式锁防止竞态条件
+
+### 🎯 Goal-Aware Execution
+
+任务携带完整的目标祖先链：
+
+```yaml
+task:
+  title: "Implement user authentication"
+  goal_chain:
+    - level: 0
+      goal: "Build a secure SaaS platform"
+      owner: "CEO-Agent"
+    - level: 1
+      goal: "Develop user management system"
+      owner: "CTO-Agent"
+    - level: 2
+      goal: "Implement authentication"
+      owner: "Engineer-01"
+```
+
+**优势**:
+- Agent 始终理解"为什么"做这件事
+- 决策与高层目标保持一致
+- 上下文自动继承
+
+### 🛡️ Enhanced Governance
+
+配置版本化和安全回滚：
+
+```bash
+# 查看配置历史
+openmoss config history --agent Engineer-01
+
+# 审批配置变更
+openmoss config approve --change-id 123 --approver CEO-Agent
+
+# 回滚到上一版本
+openmoss config rollback --agent Engineer-01 --version v1.2.0
+```
+
+**审批流**:
+```
+Config Change → Review → Approve → Apply → Log
+     ↑__________↓
+       (Reject)
+```
+
+### 📱 Mobile-Ready Dashboard
+
+支持移动端管理：
+
+```yaml
+dashboard:
+  mobile:
+    enabled: true
+    features:
+      - view_org_chart
+      - monitor_budget
+      - approve_tasks
+      - receive_alerts
 ```
 
 ---
@@ -1047,3 +1210,239 @@ Skills are automatically rejected if they contain:
 ---
 
 *Secure Orchestration, Trusted Agents*
+
+---
+
+## 十四、多角色代理系统 (Agency Agents) - v1.6 新增
+
+> 整合 Agency Agents，构建专业角色代理团队
+
+### 14.1 系统概述
+
+多角色代理系统允许根据任务类型自动路由到专业的 AI 代理角色。每个角色都有：
+- **专业领域**: 深度专精的技能集
+- **个性特征**: 独特的沟通风格和工作方式
+- **交付标准**: 明确的工作成果和质量要求
+
+### 14.2 可用角色清单
+
+#### 工程部门
+
+| 角色 | 专长 | 适用场景 |
+|------|------|----------|
+| **Frontend Developer** | React/Vue/Angular, UI 实现 | Web 应用、像素级 UI |
+| **Backend Architect** | API 设计、数据库架构 | 服务端系统、微服务 |
+| **Mobile App Builder** | iOS/Android, React Native | 跨平台移动应用 |
+| **AI Engineer** | ML 模型、AI 集成 | 机器学习功能 |
+| **DevOps Automator** | CI/CD、基础设施自动化 | 流水线开发 |
+| **Security Engineer** | 威胁建模、安全代码审查 | 应用安全 |
+| **Database Optimizer** | 模式设计、查询优化 | PostgreSQL/MySQL 调优 |
+| **Code Reviewer** | 建设性代码审查 | PR 审查、质量门禁 |
+| **SRE** | SLO、错误预算、可观测性 | 生产可靠性 |
+| **Software Architect** | 系统设计、DDD | 架构决策 |
+
+#### 内容部门
+
+| 角色 | 专长 | 适用场景 |
+|------|------|----------|
+| **Content Strategist** | 内容策略、编辑日历 | 内容规划 |
+| **SEO Specialist** | 关键词研究、技术 SEO | 搜索优化 |
+| **Copywriter** | 广告文案、着陆页 | 营销内容 |
+| **Technical Writer** | 开发者文档、API 文档 | 技术文档 |
+
+#### 设计部门
+
+| 角色 | 专长 | 适用场景 |
+|------|------|----------|
+| **UX Researcher** | 用户研究、可用性测试 | 用户洞察 |
+| **UI Designer** | 界面设计、设计系统 | 视觉设计 |
+| **Design System Architect** | 组件库、设计规范 | 设计系统 |
+
+#### 营销部门
+
+| 角色 | 专长 | 适用场景 |
+|------|------|----------|
+| **Growth Hacker** | A/B 测试、漏斗优化 | 增长实验 |
+| **Social Media Manager** | 内容日历、社区管理 | 社媒运营 |
+| **Email Marketer** | 邮件序列、自动化 | 邮件营销 |
+
+### 14.3 角色激活方式
+
+在 OpenClaw/Claude Code 中使用：
+
+```bash
+# 方法 1: 直接指定角色
+"激活 Frontend Developer 角色，帮我构建一个 React 组件"
+
+# 方法 2: 描述需求自动路由
+"我需要优化数据库查询性能"
+# → 自动路由到 Database Optimizer
+
+# 方法 3: 多角色协作
+"设计并实现一个完整的用户认证系统"
+# → Software Architect (设计)
+# → Backend Architect (API)
+# → Frontend Developer (UI)
+# → Security Engineer (审计)
+```
+
+### 14.4 角色协作工作流
+
+#### 案例 1: 全栈功能开发
+
+```
+用户: "开发一个电商购物车功能"
+
+1. Software Architect
+   → 设计系统架构
+   → 定义 API 契约
+   → 输出: TECH-DESIGN.md
+
+2. Backend Architect
+   → 设计数据库模式
+   → 实现 REST API
+   → 输出: API 实现 + 测试
+
+3. Frontend Developer
+   → 实现 React 组件
+   → 集成 API 调用
+   → 输出: UI 组件 + 样式
+
+4. Security Engineer
+   → 审查输入验证
+   → 检查权限控制
+   → 输出: 安全审计报告
+
+5. Code Reviewer
+   → 审查所有代码
+   → 提出改进建议
+   → 输出: 审查意见
+```
+
+#### 案例 2: 内容营销活动
+
+```
+用户: "策划一个产品发布营销活动"
+
+1. Content Strategist
+   → 制定内容策略
+   → 规划发布节奏
+   → 输出: CONTENT-STRATEGY.md
+
+2. Copywriter
+   → 撰写营销文案
+   → 设计着陆页
+   → 输出: 文案 + 页面原型
+
+3. SEO Specialist
+   → 关键词研究
+   → 优化内容结构
+   → 输出: SEO 建议
+
+4. Social Media Manager
+   → 设计社媒内容
+   → 制定发布计划
+   → 输出: 社媒日历
+
+5. Growth Hacker
+   → 设计增长实验
+   → 设置追踪指标
+   → 输出: 实验方案
+```
+
+### 14.5 角色配置文件
+
+每个角色的完整定义包含：
+
+```yaml
+role:
+  name: "Frontend Developer"
+  specialty: "React/Vue/Angular, UI implementation"
+  personality: "Detail-oriented, pixel-perfect, pragmatic"
+
+  workflows:
+    - analyze_requirements
+    - design_component_api
+    - implement_with_tests
+    - optimize_performance
+
+  deliverables:
+    - Component code
+    - Unit tests
+    - Storybook stories
+    - Performance report
+
+  communication_style:
+    - "Uses precise technical terminology"
+    - "Provides code examples"
+    - "Asks clarifying questions about requirements"
+```
+
+### 14.6 与 OpenMOSS 集成
+
+```yaml
+# openmoss-orchestration 配置
+agents:
+  roles:
+    - name: "frontend-dev"
+      role: "Frontend Developer"
+      skills:
+        - react
+        - typescript
+        - tailwind
+
+    - name: "backend-arch"
+      role: "Backend Architect"
+      skills:
+        - nodejs
+        - postgresql
+        - redis
+
+    - name: "security-eng"
+      role: "Security Engineer"
+      skills:
+        - threat-modeling
+        - penetration-testing
+        - compliance
+
+routing:
+  rules:
+    - pattern: "ui|frontend|component|react"
+      agent: "frontend-dev"
+
+    - pattern: "api|backend|database|server"
+      agent: "backend-arch"
+
+    - pattern: "security|auth|vulnerability"
+      agent: "security-eng"
+```
+
+### 14.7 最佳实践
+
+1. **明确任务边界**: 每个角色的任务应该清晰可交付
+2. **顺序依赖管理**: 使用工作流引擎管理角色执行顺序
+3. **结果交接标准**: 定义清晰的交付物和验收标准
+4. **质量门禁**: 关键节点设置 Code Review 或审核
+5. **成本控制**: 为每个角色设置 Token 预算上限
+
+---
+
+## 更新日志
+
+### v1.6.0 (2026-03-12)
+- ✨ 新增 Agency Agents 多角色代理系统
+- ✨ 支持 20+ 专业角色（工程/内容/设计/营销）
+- ✨ 新增角色路由和协作工作流
+- ✨ 集成 Agency Agents Skill 精华
+- 📚 更新触发关键词和适用场景
+
+### v1.5.0
+- 初始版本，Paperclip-inspired Control Plane
+- Agent Loop 监控
+- ClipHub 支持
+- 多公司隔离
+
+---
+
+*Secure Orchestration, Trusted Agents*
+*升级至 v1.6.0 | 新增多角色代理系统*
